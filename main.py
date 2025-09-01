@@ -1,9 +1,15 @@
 import uvicorn
 from whisper_jax import FlaxWhisperPipline
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import numpy as np
+import base64
 import time
+
+# Define the request body model using Pydantic
+class TranscriptionRequest(BaseModel):
+    audio_chunk: str  # This will be the base64 encoded string
 
 print("--- Server starting, loading model... ---")
 # Initialize the pipeline
@@ -23,22 +29,23 @@ app.add_middleware(
 )
 
 @app.post("/transcribe")
-async def transcribe(file: UploadFile = File(...)):
-    print("[/transcribe] - Request received.")
+async def transcribe(request: TranscriptionRequest):
+    print("[/transcribe] - JSON request received.")
     try:
         start_time = time.time()
         
-        print("[/transcribe] - Reading file contents...")
-        contents = await file.read()
-        read_time = time.time()
-        print(f"[/transcribe] - File read in {read_time - start_time:.2f} seconds.")
+        # Decode the base64 string to bytes
+        print("[/transcribe] - Decoding base64 chunk...")
+        contents = base64.b64decode(request.audio_chunk)
+        decode_time = time.time()
+        print(f"[/transcribe] - Chunk decoded in {decode_time - start_time:.2f} seconds.")
 
         audio_array = np.frombuffer(contents, dtype=np.int16)
         
         print("[/transcribe] - Starting transcription...")
         transcript = pipeline({"array": audio_array, "sampling_rate": 16000})
         transcribe_time = time.time()
-        print(f"[/transcribe] - Transcription finished in {transcribe_time - read_time:.2f} seconds.")
+        print(f"[/transcribe] - Transcription finished in {transcribe_time - decode_time:.2f} seconds.")
         
         return {"transcript": transcript["text"]}
 
