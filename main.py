@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import numpy as np
 import base64
 import time
+import os
 
 # Define the request body model using Pydantic
 class TranscriptionRequest(BaseModel):
@@ -61,4 +62,5 @@ def read_root():
 
 # Run the app with uvicorn
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
