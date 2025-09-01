@@ -1,17 +1,25 @@
 import uvicorn
 from whisper_jax import FlaxWhisperPipline
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 
 # Initialize the pipeline
 # Using "openai/whisper-tiny" is a good starting point for CPU instances.
-# It's fast and the quality is still very good.
-# For higher quality on a paid Render instance, you could use "openai/whisper-base"
-# or "openai/whisper-small".
 pipeline = FlaxWhisperPipline("openai/whisper-tiny")
 
 # Initialize FastAPI app
 app = FastAPI()
+
+# --- Add CORS middleware --- 
+# This is the key change to allow requests from your web app's domain.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
@@ -30,6 +38,11 @@ async def transcribe(file: UploadFile = File(...)):
 
     except Exception as e:
         return {"error": str(e)}
+
+# Health check endpoint
+@app.get("/")
+def read_root():
+    return {"status": "ok"}
 
 # Run the app with uvicorn
 if __name__ == "__main__":
