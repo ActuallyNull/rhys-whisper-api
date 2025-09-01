@@ -30,8 +30,8 @@ async def transcribe(file: UploadFile = File(...)):
         # Convert the byte string to a numpy array
         audio_array = np.frombuffer(contents, dtype=np.int16)
 
-        # Transcribe
-        transcript = pipeline(audio_array)
+        # Transcribe using the recommended dictionary format
+        transcript = pipeline({"array": audio_array, "sampling_rate": 16000})
         
         # Return the transcript
         return {"transcript": transcript["text"]}
