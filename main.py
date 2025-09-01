@@ -3,16 +3,17 @@ from whisper_jax import FlaxWhisperPipline
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
+import time
 
+print("--- Server starting, loading model... ---")
 # Initialize the pipeline
-# Using "openai/whisper-tiny" is a good starting point for CPU instances.
 pipeline = FlaxWhisperPipline("openai/whisper-tiny")
+print("--- Model loaded successfully. Server is ready. ---")
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# --- Add CORS middleware --- 
-# This is the key change to allow requests from your web app's domain.
+# --- Add CORS middleware ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins
@@ -23,25 +24,32 @@ app.add_middleware(
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
+    print("[/transcribe] - Request received.")
     try:
-        # Read the audio file from the upload
+        start_time = time.time()
+        
+        print("[/transcribe] - Reading file contents...")
         contents = await file.read()
-        
-        # Convert the byte string to a numpy array
-        audio_array = np.frombuffer(contents, dtype=np.int16)
+        read_time = time.time()
+        print(f"[/transcribe] - File read in {read_time - start_time:.2f} seconds.")
 
-        # Transcribe using the recommended dictionary format
-        transcript = pipeline({"array": audio_array, "sampling_rate": 16000})
+        audio_array = np.frombuffer(contents, dtype=np.int16)
         
-        # Return the transcript
+        print("[/transcribe] - Starting transcription...")
+        transcript = pipeline({"array": audio_array, "sampling_rate": 16000})
+        transcribe_time = time.time()
+        print(f"[/transcribe] - Transcription finished in {transcribe_time - read_time:.2f} seconds.")
+        
         return {"transcript": transcript["text"]}
 
     except Exception as e:
+        print(f"[/transcribe] - An error occurred: {str(e)}")
         return {"error": str(e)}
 
 # Health check endpoint
 @app.get("/")
 def read_root():
+    print("[/] - Health check requested.")
     return {"status": "ok"}
 
 # Run the app with uvicorn
