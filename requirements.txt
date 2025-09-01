@@ -1,1 +1,3 @@
 whisper-jax
+fastapi
+uvicorn
