@@ -1,3 +1,1 @@
-whisper-jax
-fastapi
-uvicorn
+git+https://github.com/sanchit-gandhi/whisper-jax.git
