@@ -3,3 +3,4 @@ jax
 fastapi
 uvicorn
 numpy
+python-multipart
