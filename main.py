@@ -47,6 +47,7 @@ async def transcribe(request: TranscriptionRequest):
         transcript = pipeline({"array": audio_array, "sampling_rate": 16000})
         transcribe_time = time.time()
         print(f"[/transcribe] - Transcription finished in {transcribe_time - decode_time:.2f} seconds.")
+        print(f"[/transcribe] - Returned transcript: '{transcript["text"]}'")
         
         return {"transcript": transcript["text"]}
 
